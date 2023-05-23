@@ -1,19 +1,36 @@
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import { PrismaClientExceptionFilter, PrismaService } from 'nestjs-prisma';
-import { AppModule } from './app.module';
 import type {
   CorsConfig,
   NestConfig,
   SwaggerConfig,
 } from 'src/common/configs/config.interface';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // abortOnError: false,
+  });
 
-  // Using the built-in validation
+  // Set a prefix for every route registered
+  // https://docs.nestjs.com/faq/global-prefix
+  app.setGlobalPrefix('v1/api', {
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
+  });
+
+  // It parses incoming requests with JSON payloads
+  // https://expressjs.com/en/api.html#express.json
+  app.use(json({ limit: '50mb' }));
+
+  // It parses incoming requests with urlencoded payloads
+  // https://expressjs.com/en/api.html#express.urlencoded
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
+
+  // Use the built-in validation
   // https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe
   app.useGlobalPipes(new ValidationPipe());
 
@@ -48,7 +65,7 @@ async function bootstrap() {
   // Cross-origin resource sharing (CORS)
   // https://docs.nestjs.com/security/cors#getting-started
   if (corsConfig.enabled) {
-    app.enableCors();
+    app.enableCors({ origin: true, credentials: true });
   }
 
   await app.listen(process.env.PORT || nestConfig.port || 3000);
