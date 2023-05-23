@@ -5,13 +5,13 @@ import { ChangePasswordInput } from './dto/change-password.input';
 import { UpdateUserInput } from './dto/update-user.input';
 
 @Injectable()
-export class UsersService {
+export class UserService {
   constructor(
     private prisma: PrismaService,
     private passwordService: PasswordService
   ) {}
 
-  updateUser(userId: string, newUserData: UpdateUserInput) {
+  update(userId: string, newUserData: UpdateUserInput) {
     return this.prisma.user.update({
       data: newUserData,
       where: {

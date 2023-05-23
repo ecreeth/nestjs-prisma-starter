@@ -1,15 +1,11 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsNotEmpty, MinLength } from 'class-validator';
+import { IsNotEmpty, Min } from 'class-validator';
 
-@InputType()
 export class ChangePasswordInput {
-  @Field()
   @IsNotEmpty()
-  @MinLength(8)
+  @Min(8)
   oldPassword: string;
 
-  @Field()
   @IsNotEmpty()
-  @MinLength(8)
+  @Min(8)
   newPassword: string;
 }
