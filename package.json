@@ -50,6 +50,7 @@
     "docker:build": "docker-compose build"
   },
   "dependencies": {
+    "@casl/ability": "^6.5.0",
     "@nestjs/common": "9.3.10",
     "@nestjs/config": "2.3.1",
     "@nestjs/core": "9.3.10",
