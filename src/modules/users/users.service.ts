@@ -1,68 +1,48 @@
-import { PrismaService } from 'nestjs-prisma';
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PasswordService } from 'src/auth/password.service';
-import { ChangePasswordInput } from './dto/change-password.input';
-import { Prisma, User } from '@prisma/client';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/models/user.model';
+import { Repository } from 'typeorm';
+import { PasswordService } from '../auth/password.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(
-    private prisma: PrismaService,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
     private passwordService: PasswordService
   ) {}
 
-  async show(
-    userWhereUniqueInput: Prisma.UserWhereUniqueInput
-  ): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: userWhereUniqueInput,
-    });
+  create(createUserDto: CreateUserDto) {
+    return this.usersRepository.save(createUserDto);
   }
 
-  async all(params: {
-    skip?: number;
-    take?: number;
-    cursor?: Prisma.UserWhereUniqueInput;
-    where?: Prisma.UserWhereInput;
-    orderBy?: Prisma.UserOrderByWithRelationInput;
-  }): Promise<User[]> {
-    const { skip, take, cursor, where, orderBy } = params;
-    return this.prisma.user.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
-    });
+  findAll(): Promise<User[]> {
+    return this.usersRepository.find();
   }
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
-    return this.prisma.user.create({
-      data,
-    });
+  findById(id: string): Promise<User> {
+    return this.usersRepository.findOne({ where: { id } });
   }
 
-  async update(params: {
-    where: Prisma.UserWhereUniqueInput;
-    data: Prisma.UserUpdateInput;
-  }): Promise<User> {
-    const { where, data } = params;
-    return this.prisma.user.update({
-      data,
-      where,
-    });
+  findByEmail(email: string): Promise<User> {
+    return this.usersRepository.findOne({ where: { email } });
   }
 
-  async delete(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return this.prisma.user.delete({
-      where,
-    });
+  update(id: string, updateUserDto: UpdateUserDto) {
+    return this.usersRepository.update(id, updateUserDto);
+  }
+
+  remove(id: string) {
+    return this.usersRepository.delete(id);
   }
 
   async changePassword(
     userId: string,
     userPassword: string,
-    changePassword: ChangePasswordInput
+    changePassword: ChangePasswordDto
   ) {
     const passwordValid = await this.passwordService.validatePassword(
       changePassword.oldPassword,
@@ -77,11 +57,11 @@ export class UserService {
       changePassword.newPassword
     );
 
-    return this.prisma.user.update({
-      data: {
-        password: hashedPassword,
-      },
-      where: { id: userId },
-    });
+    // return this.prisma.user.update({
+    //   data: {
+    //     password: hashedPassword,
+    //   },
+    //   where: { id: userId },
+    // });
   }
 }

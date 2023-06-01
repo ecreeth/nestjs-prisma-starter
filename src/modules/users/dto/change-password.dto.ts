@@ -1,6 +1,6 @@
 import { IsNotEmpty, Min } from 'class-validator';
 
-export class ChangePasswordInput {
+export class ChangePasswordDto {
   @IsNotEmpty()
   @Min(8)
   oldPassword: string;
