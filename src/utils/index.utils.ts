@@ -33,12 +33,12 @@ export function lowerCase({ value }: TransformFnParams) {
  * @throws {Error} if condition is falsey
  */
 export function invariant(
-	condition: any,
-	message: string | (() => string),
+  condition: any,
+  message: string | (() => string),
 ): asserts condition {
-	if (!condition) {
-		throw new Error(typeof message === 'function' ? message() : message)
-	}
+  if (!condition) {
+    throw new Error(typeof message === 'function' ? message() : message);
+  }
 }
 
 /**
@@ -57,14 +57,14 @@ export function invariant(
  * @throws {Response} if condition is falsey
  */
 export function invariantResponse(
-	condition: any,
-	message: string | (() => string),
-	responseInit?: ResponseInit,
+  condition: any,
+  message: string | (() => string),
+  responseInit?: ResponseInit,
 ): asserts condition {
-	if (!condition) {
-		throw new Response(typeof message === 'function' ? message() : message, {
-			status: 400,
-			...responseInit,
-		})
-	}
+  if (!condition) {
+    throw new Response(typeof message === 'function' ? message() : message, {
+      status: 400,
+      ...responseInit,
+    });
+  }
 }

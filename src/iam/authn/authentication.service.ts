@@ -7,6 +7,7 @@ import {
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { PrismaService } from 'nestjs-prisma';
 import jwtConfig from 'src/common/configs/jwt.config';
 import { HashingService } from '../hashing/hashing.service';
@@ -190,7 +191,6 @@ export class AuthnService {
     }
   }
 
-  // TODO:
   async resetPassword(payload: ResetPasswordDto) {
     const passwordReset = await this.prisma.passwordReset.findUnique({
       where: { token: payload.token },
@@ -209,9 +209,7 @@ export class AuthnService {
     return await this.prisma.$transaction([
       this.prisma.user.update({
         where: { email: passwordReset.email },
-        data: {
-          password: hashedPassword,
-        },
+        data: { password: hashedPassword },
       }),
       this.prisma.passwordReset.delete({
         where: { token: payload.token },
@@ -219,28 +217,29 @@ export class AuthnService {
     ]);
   }
 
-  // TODO:
   async forgotPassword({ email }: ForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      select: { id: true },
     });
 
     if (!user) {
       throw new BadRequestException(
-        `We can't find a user with that e-mail address`,
+        `We couldn't find a user with the provided email address`,
       );
     }
 
-    // TODO:
-    const resetToken = 'generateToken()';
+    const resetToken = randomUUID();
 
-    await this.prisma.passwordReset.create({
+    const passwordReset = await this.prisma.passwordReset.create({
       data: {
         email,
         token: resetToken,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // Expires in 1 hour
+        expiresAt: new Date(Date.now() + 7 * 60 * 1000), // Expires in 7 minutes
       },
     });
+
+    return { passwordReset };
 
     // await sendPasswordResetEmail(email, encodeURIComponent(resetToken));
   }

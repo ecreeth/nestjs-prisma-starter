@@ -1,22 +1,14 @@
-import { InjectQueue } from '@nestjs/bull';
 import {
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   Get,
-  MaxFileSizeValidator,
   Param,
-  ParseFilePipe,
   Patch,
   Post,
   Query,
-  UploadedFile,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
-import { Queue } from 'bull';
+import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from 'nestjs-prisma';
 import { ReqUser } from 'src/iam/authn/decorators/user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -30,34 +22,30 @@ export class UsersController {
   constructor(
     private prisma: PrismaService,
     private usersService: UserService,
-    // @InjectQueue('greetings') private greetingsQueue: Queue,
   ) {}
-
-  @Get('/say-hello')
-  async sayHello() {
-    // await this.greetingsQueue.add('greet', 'Luis M.');
-  }
 
   @Post()
   @ApiBody({ type: CreateUserDto })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.prisma.user.create({ data: createUserDto });
+  create(@Body() payload: CreateUserDto) {
+    return this.prisma.user.create({ data: payload });
   }
 
   @Get()
   findAll(
     @Query('query') query: string = '',
-    @Query('limit') limit: number = 10,
-    @Query('offset') offset: number = 0,
-    @Query('orderBy') orderBy: string = 'createdAt',
-    @Query('sortBy') sortBy: 'asc' | 'desc' = 'asc',
+    @Query('limit') limit: number,
+    @Query('offset') offset: number,
+    @Query('orderBy') orderBy: string,
+    @Query('sortBy') sortBy: 'asc' | 'desc',
   ) {
     offset = Math.max(0, offset) || 0;
     limit = Math.max(1, Math.min(500, limit)) || 10;
 
+    const _sortBy = sortBy.toLowerCase();
     const allowedOrderBys = [
       'id',
       'email',
+      'username',
       'firstName',
       'lastName',
       'createdAt',
@@ -67,7 +55,7 @@ export class UsersController {
       orderBy = 'createdAt';
     }
 
-    if (!['asc', 'desc'].includes(sortBy)) {
+    if (!['asc', 'desc'].includes(_sortBy)) {
       sortBy = 'asc';
     }
 
@@ -78,27 +66,27 @@ export class UsersController {
       take: limit,
       skip: offset,
       orderBy: {
-        [orderBy]: sortBy,
+        [orderBy]: _sortBy,
       },
     });
   }
 
-  @Get(':id')
-  @ApiParam({ name: 'id' })
-  findOne(@Param('id') id: string) {
-    return this.usersService.findById(id);
+  @Get(':user_id')
+  @ApiParam({ name: 'user_id' })
+  findOne(@Param('user_id') userId: string) {
+    return this.usersService.findById(userId);
   }
 
-  @Patch(':id')
-  @ApiParam({ name: 'id' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch(':user_id')
+  @ApiParam({ name: 'user_id' })
+  update(@Param('user_id') userId: string, @Body() payload: UpdateUserDto) {
+    return this.usersService.update(userId, payload);
   }
 
-  @Delete(':id')
-  @ApiParam({ name: 'id' })
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  @Delete(':user_id')
+  @ApiParam({ name: 'user_id' })
+  remove(@Param('user_id') userId: string) {
+    return this.usersService.remove(userId);
   }
 
   @Get('count')
@@ -111,28 +99,11 @@ export class UsersController {
     return user;
   }
 
-  @Get(':id/verify-password')
-  verifyPassword(@Param('id') id: string, @Body() payload: VerifyPassword) {
-    // TODO:
-  }
-
-  @Post(':id/profile-image')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file'))
-  setProfileImage(
-    @Param('id') id: string,
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 1000 }),
-          new FileTypeValidator({
-            fileType: 'image/(jpeg|png)',
-          }),
-        ],
-      }),
-    )
-    file: Express.Multer.File,
+  @Get(':user_id/verify-password')
+  verifyPassword(
+    @Param('user_id') userId: string,
+    @Body() payload: VerifyPassword,
   ) {
-    console.log(file);
+    return this.usersService.verifyPassword(userId, payload.password);
   }
 }

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { HashingService } from '../iam/hashing/hashing.service';
@@ -11,8 +15,8 @@ export class UserService {
     private hashingService: HashingService,
   ) {}
 
-  create(createUserDto: Prisma.UserCreateInput) {
-    return this.prisma.user.create({ data: createUserDto });
+  create(data: Prisma.UserCreateInput) {
+    return this.prisma.user.create({ data });
   }
 
   findAll(): Promise<User[]> {
@@ -28,26 +32,51 @@ export class UserService {
   }
 
   findOneByOrFail(options: Prisma.UserFindFirstArgs): Promise<User> {
-    return this.prisma.user.findFirst(options);
+    return this.prisma.user.findFirstOrThrow(options);
   }
 
   findByEmail(email: string): Promise<User> {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  update(id: string, updateUserDto: Prisma.UserUpdateInput) {
-    return this.prisma.user.update({
-      where: { id },
-      data: updateUserDto,
-    });
+  update(id: string, data: Prisma.UserUpdateInput) {
+    return this.prisma.user.update({ where: { id }, data });
   }
 
   remove(id: string) {
     return this.prisma.user.delete({ where: { id } });
   }
 
-  count(): Promise<number> {
-    return this.prisma.user.count();
+  async count() {
+    return {
+      count: await this.prisma.user.count(),
+    };
+  }
+
+  async verifyPassword(userId: string, password: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId },
+      select: { password: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('The user does not exist.');
+    }
+
+    const isPasswordValid = await this.hashingService.compare(
+      user.password,
+      password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnprocessableEntityException(
+        'The provided password was incorrect.',
+      );
+    }
+
+    return {
+      verified: true,
+    };
   }
 
   async changePassword(
@@ -61,7 +90,7 @@ export class UserService {
     );
 
     if (!isPasswordValid) {
-      throw new BadRequestException(
+      throw new UnprocessableEntityException(
         'Old password is not valid. Please try again.',
       );
     }
@@ -70,7 +99,7 @@ export class UserService {
       changePassword.newPassword,
     );
 
-    await this.prisma.user.update({
+    return await this.prisma.user.update({
       where: { id: userId },
       data: {
         password: hashedPassword,

@@ -1,40 +1,35 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { User } from '@prisma/client';
+import { PrismaService } from 'nestjs-prisma';
 import { HashingService } from '../../iam/hashing/hashing.service';
 import { UserService } from '../users.service';
 
 const createUserDto = {
   firstName: 'John',
-  lastName: ' Doe',
+  lastName: 'Doe',
   email: 'john@example.com',
 } as User;
 
 describe('UsersService', () => {
   let usersService: UserService;
-  let usersRepository: Repository<User>;
+  let prismaService: PrismaService;
   let hashingService: HashingService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UserService,
-        HashingService,
-        {
-          provide: getRepositoryToken(User),
-          useClass: Repository,
-        },
-      ],
+      providers: [UserService, HashingService, PrismaService],
     }).compile();
 
     usersService = module.get<UserService>(UserService);
-    usersRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    prismaService = module.get<PrismaService>(PrismaService);
     hashingService = module.get<HashingService>(HashingService);
   });
 
   describe('create', () => {
     it('should create a new user', async () => {
-      const saveSpy = jest
-        .spyOn(usersRepository, 'save')
+      const createSpy = jest
+        .spyOn(prismaService.user, 'create')
         .mockResolvedValueOnce({
           id: '1',
           ...createUserDto,
@@ -42,7 +37,7 @@ describe('UsersService', () => {
 
       const result = await usersService.create(createUserDto);
 
-      expect(saveSpy).toHaveBeenCalledWith(createUserDto);
+      expect(createSpy).toHaveBeenCalledWith({ data: createUserDto });
       expect(result).toEqual({ id: '1', ...createUserDto });
     });
   });
@@ -56,13 +51,13 @@ describe('UsersService', () => {
         },
       ];
 
-      const findSpy = jest
-        .spyOn(usersRepository, 'find')
+      const findManySpy = jest
+        .spyOn(prismaService.user, 'findMany')
         .mockResolvedValueOnce(users as User[]);
 
       const result = await usersService.findAll();
 
-      expect(findSpy).toHaveBeenCalledWith({ take: 1000 });
+      expect(findManySpy).toHaveBeenCalledWith({ take: 1000 });
       expect(result).toEqual(users);
     });
   });
@@ -75,13 +70,13 @@ describe('UsersService', () => {
         ...createUserDto,
       };
 
-      const findOneSpy = jest
-        .spyOn(usersRepository, 'findOne')
-        .mockResolvedValueOnce(user);
+      const findUniqueSpy = jest
+        .spyOn(prismaService.user, 'findUnique')
+        .mockResolvedValueOnce(user as User);
 
       const result = await usersService.findOne(options);
 
-      expect(findOneSpy).toHaveBeenCalledWith(options);
+      expect(findUniqueSpy).toHaveBeenCalledWith(options);
       expect(result).toEqual(user);
     });
   });
@@ -96,6 +91,9 @@ describe('UsersService', () => {
       };
       const hashedPassword = 'hashedPassword';
 
+      const findUniqueSpy = jest
+        .spyOn(prismaService.user, 'findUnique')
+        .mockResolvedValueOnce({ password: userPassword } as User);
       const compareSpy = jest
         .spyOn(hashingService, 'compare')
         .mockResolvedValueOnce(true);
@@ -103,8 +101,8 @@ describe('UsersService', () => {
         .spyOn(hashingService, 'hash')
         .mockResolvedValueOnce(hashedPassword);
       const updateSpy = jest
-        .spyOn(usersRepository, 'update')
-        .mockResolvedValueOnce({} as any);
+        .spyOn(prismaService.user, 'update')
+        .mockResolvedValueOnce({} as User);
 
       const result = await usersService.changePassword(
         userId,
@@ -112,13 +110,15 @@ describe('UsersService', () => {
         changePassword,
       );
 
+      expect(findUniqueSpy).toHaveBeenCalledWith({ where: { id: userId } });
       expect(compareSpy).toHaveBeenCalledWith(
         changePassword.oldPassword,
         userPassword,
       );
       expect(hashSpy).toHaveBeenCalledWith(changePassword.newPassword);
-      expect(updateSpy).toHaveBeenCalledWith(userId, {
-        password: hashedPassword,
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { password: hashedPassword },
       });
       expect(result).toEqual({});
     });

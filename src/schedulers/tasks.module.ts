@@ -2,6 +2,6 @@ import { Module } from '@nestjs/common';
 import { TaskService } from './tasks.service';
 
 @Module({
-  providers: [TaskService]
+  providers: [TaskService],
 })
 export class TasksModule {}

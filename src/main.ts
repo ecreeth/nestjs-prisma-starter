@@ -2,6 +2,7 @@ import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import type {
   CorsConfig,
@@ -42,6 +43,18 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   /*
+   * Cross-origin resource sharing (CORS)
+   * URL: https://docs.nestjs.com/security/cors#getting-started
+   */
+  app.enableCors({ origin: true, credentials: true });
+
+  /*
+   * Cookies
+   * URL: https://docs.nestjs.com/techniques/cookies
+   */
+  app.use(cookieParser());
+
+  /*
    * Prisma client exception filter for unhandled exceptions
    * URL: https://nestjs-prisma.dev/docs/exception-filter
    */
@@ -66,14 +79,6 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, options);
 
     SwaggerModule.setup(swaggerConfig.path || 'api', app, document);
-  }
-
-  /*
-   * Cross-origin resource sharing (CORS)
-   * URL: https://docs.nestjs.com/security/cors#getting-started
-   */
-  if (corsConfig.enabled) {
-    app.enableCors({ origin: true, credentials: true });
   }
 
   await app.listen(process.env.PORT || nestConfig.port || 3000);

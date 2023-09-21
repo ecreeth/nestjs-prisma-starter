@@ -19,11 +19,13 @@ export class ApiKeyGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const apiKey = this.extractKeyFromHeader(request);
+
     if (!apiKey) {
       throw new UnauthorizedException();
     }
-    const uuid = this.apiKeyService.extractIdFromApiKey(apiKey);
+
     try {
+      const uuid = this.apiKeyService.extractIdFromApiKey(apiKey);
       const apiKeyModel = await this.prisma.apiKey.findFirst({
         where: { uuid },
         include: {
@@ -35,10 +37,10 @@ export class ApiKeyGuard implements CanActivate {
         sub: apiKeyModel.user.id,
         email: apiKeyModel.user.email,
       } as JWTPayload;
+      return true;
     } catch {
       throw new UnauthorizedException();
     }
-    return true;
   }
 
   private extractKeyFromHeader(request: Request): string | undefined {
