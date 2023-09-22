@@ -11,6 +11,7 @@ import {
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from 'nestjs-prisma';
 import { ReqUser } from 'src/iam/authn/decorators/user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { VerifyPassword } from './dto/verify-password.dto';
@@ -105,5 +106,13 @@ export class UsersController {
     @Body() payload: VerifyPassword,
   ) {
     return this.usersService.verifyPassword(userId, payload.password);
+  }
+
+  @Get(':user_id/change-password')
+  changePassword(
+    @Param('user_id') userId: string,
+    @Body() payload: ChangePasswordDto,
+  ) {
+    return this.usersService.changePassword(userId, payload);
   }
 }

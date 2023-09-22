@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { HashingService } from '../iam/hashing/hashing.service';
@@ -54,14 +50,10 @@ export class UserService {
   }
 
   async verifyPassword(userId: string, password: string) {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findFirstOrThrow({
       where: { id: userId },
       select: { password: true },
     });
-
-    if (!user) {
-      throw new NotFoundException('The user does not exist.');
-    }
 
     const isPasswordValid = await this.hashingService.compare(
       user.password,
@@ -79,14 +71,15 @@ export class UserService {
     };
   }
 
-  async changePassword(
-    userId: string,
-    userPassword: string,
-    changePassword: ChangePasswordDto,
-  ) {
+  async changePassword(userId: string, payload: ChangePasswordDto) {
+    const user = await this.prisma.user.findFirstOrThrow({
+      where: { id: userId },
+      select: { password: true },
+    });
+
     const isPasswordValid = await this.hashingService.compare(
-      changePassword.oldPassword,
-      userPassword,
+      user.password,
+      payload.oldPassword,
     );
 
     if (!isPasswordValid) {
@@ -95,15 +88,11 @@ export class UserService {
       );
     }
 
-    const hashedPassword = await this.hashingService.hash(
-      changePassword.newPassword,
-    );
+    const hashedPassword = await this.hashingService.hash(payload.newPassword);
 
     return await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        password: hashedPassword,
-      },
+      data: { password: hashedPassword },
     });
   }
 }

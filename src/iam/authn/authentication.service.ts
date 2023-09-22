@@ -7,8 +7,8 @@ import {
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
-import { randomUUID } from 'crypto';
 import { PrismaService } from 'nestjs-prisma';
+import { randomUUID } from 'node:crypto';
 import jwtConfig from 'src/common/configs/jwt.config';
 import { HashingService } from '../hashing/hashing.service';
 import { JWTPayload } from '../interfaces/req-user-data.interface';
