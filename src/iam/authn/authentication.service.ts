@@ -19,6 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { OtpService } from './otp/otp.service';
+import { RefreshTokenIdsStorage } from './refresh-token-ids-storage.service';
 
 @Injectable()
 export class AuthnService {
@@ -26,6 +27,7 @@ export class AuthnService {
     private jwtService: JwtService,
     private otpService: OtpService,
     private hashingService: HashingService,
+    private refreshTokenIdsStorage: RefreshTokenIdsStorage,
     private prisma: PrismaService,
     @Inject(jwtConfig.KEY)
     private jwtConfiguration: ConfigType<typeof jwtConfig>,
@@ -125,12 +127,17 @@ export class AuthnService {
    * @returns {Promise<Token>} - A Promise that resolves to a Token object
    */
   async generateTokens(user: User): Promise<Token> {
+    const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken(user.id, this.jwtConfiguration.accessTokenTtl, {
         email: user.email,
       }),
-      this.signToken(user.id, this.jwtConfiguration.refreshTokenTtl),
+      this.signToken(user.id, this.jwtConfiguration.refreshTokenTtl, {
+        refreshTokenId,
+      }),
     ]);
+
+    await this.refreshTokenIdsStorage.insert(user.id, refreshTokenId);
 
     return {
       accessToken,
@@ -172,20 +179,27 @@ export class AuthnService {
    */
   async refreshTokens(payload: RefreshTokenDto): Promise<Token> {
     try {
-      const { sub } = await this.jwtService.verifyAsync<
-        Pick<JWTPayload, 'sub'>
+      const { sub, refreshTokenId } = await this.jwtService.verifyAsync<
+        Pick<JWTPayload, 'sub'> & { refreshTokenId: string }
       >(payload.refreshToken, {
         secret: this.jwtConfiguration.secret,
         issuer: this.jwtConfiguration.issuer,
         audience: this.jwtConfiguration.audience,
       });
-      const user = await this.prisma.user.findUnique({
+      const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: sub },
       });
 
-      if (!user) {
-        throw new UnauthorizedException();
+      const isRefreshTokenIdValid = await this.refreshTokenIdsStorage.validate(
+        user.id,
+        refreshTokenId,
+      );
+
+      if (!isRefreshTokenIdValid) {
+        throw new Error('Refresh token is invalid');
       }
+
+      await this.refreshTokenIdsStorage.invalidate(user.id);
 
       return this.generateTokens(user);
     } catch {

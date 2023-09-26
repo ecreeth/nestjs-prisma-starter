@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import jwtConfig from 'src/common/configs/jwt.config';
+import { HashingService } from '../hashing/hashing.service';
 import { UserService } from '../users/users.service';
 import { ApiKeyService } from './authn/api-keys.service';
 import { AuthnController } from './authn/authentication.controller';
@@ -13,11 +14,11 @@ import { ApiKeyGuard } from './authn/guards/api-key.guard';
 import { AuthGuard } from './authn/guards/auth.guard';
 import { JwtGuard } from './authn/guards/jwt.guard';
 import { OtpService } from './authn/otp/otp.service';
+import { RefreshTokenIdsStorage } from './authn/refresh-token-ids-storage.service';
 import { GoogleAuthnController } from './authn/social/google/google-authentication.controller';
 import { GoogleAuthnService } from './authn/social/google/google-authentication.service';
 import { AuthzController } from './authz/authorization.controller';
 import { RoleService } from './authz/roles/roles.service';
-import { HashingService } from '../hashing/hashing.service';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { HashingService } from '../hashing/hashing.service';
     HashingService,
     GoogleAuthnService,
     RoleService,
+    RefreshTokenIdsStorage,
   ],
   exports: [],
   controllers: [AuthnController, AuthzController, GoogleAuthnController],
