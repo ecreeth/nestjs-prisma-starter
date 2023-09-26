@@ -5,14 +5,12 @@ import {
   Get,
   Param,
   Patch,
-  Post,
   Query,
 } from '@nestjs/common';
-import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiParam, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from 'nestjs-prisma';
 import { ReqUser } from 'src/iam/authn/decorators/user.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { VerifyPassword } from './dto/verify-password.dto';
 import { UserService } from './users.service';
@@ -25,24 +23,17 @@ export class UsersController {
     private usersService: UserService,
   ) {}
 
-  @Post()
-  @ApiBody({ type: CreateUserDto })
-  create(@Body() payload: CreateUserDto) {
-    return this.prisma.user.create({ data: payload });
-  }
-
   @Get()
   findAll(
-    @Query('query') query: string = '',
-    @Query('limit') limit: number,
-    @Query('offset') offset: number,
-    @Query('orderBy') orderBy: string,
-    @Query('sortBy') sortBy: 'asc' | 'desc',
+    @Query('query') query?: string,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
+    @Query('orderBy') orderBy?: string,
+    @Query('sortBy') sortBy?: 'asc' | 'desc',
   ) {
     offset = Math.max(0, offset) || 0;
     limit = Math.max(1, Math.min(500, limit)) || 10;
 
-    const _sortBy = sortBy.toLowerCase();
     const allowedOrderBys = [
       'id',
       'email',
@@ -56,7 +47,7 @@ export class UsersController {
       orderBy = 'createdAt';
     }
 
-    if (!['asc', 'desc'].includes(_sortBy)) {
+    if (!['asc', 'desc'].includes(sortBy)) {
       sortBy = 'asc';
     }
 
@@ -70,7 +61,7 @@ export class UsersController {
       take: limit,
       skip: offset,
       orderBy: {
-        [orderBy]: _sortBy,
+        [orderBy]: sortBy,
       },
     });
   }

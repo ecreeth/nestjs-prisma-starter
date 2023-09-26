@@ -37,29 +37,24 @@ export class AuthnService {
    * @param {string} password - The user's password
    * @returns {Promise<User | null>} - A Promise that resolves to a User object if the user is valid, or null if the user is not found or the password is incorrect
    */
-  async checkUserCredentials(email: string, password: string): Promise<User> {
-    const user = await this.prisma.user.findFirst({
+  async checkUserCredentials(
+    email: string,
+    password: string,
+  ): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
       where: { email },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        password: true,
-        twoFactorSecret: true,
-        twoFactorEnabled: true,
-      },
+      include: { password: true },
     });
 
     if (user) {
       const isValidPassword = await this.hashingService.compare(
         password,
-        user.password,
+        user.password.hash,
       );
 
       if (isValidPassword) {
         user.password = undefined;
-        return user as User;
+        return user;
       }
     }
 
@@ -107,9 +102,13 @@ export class AuthnService {
       data: {
         email: payload.email,
         username: payload.username,
-        password: hashedPassword,
         lastName: payload.lastName,
         firstName: payload.firstName,
+        password: {
+          create: {
+            hash: hashedPassword,
+          },
+        },
       },
     });
     return await this.generateTokens(user);
@@ -209,7 +208,13 @@ export class AuthnService {
     return await this.prisma.$transaction([
       this.prisma.user.update({
         where: { email: passwordReset.email },
-        data: { password: hashedPassword },
+        data: {
+          password: {
+            update: {
+              hash: hashedPassword,
+            },
+          },
+        },
       }),
       this.prisma.passwordReset.delete({
         where: { token: payload.token },
@@ -239,7 +244,7 @@ export class AuthnService {
       },
     });
 
-    return { passwordReset };
+    return { email: passwordReset.email, token: passwordReset.token };
 
     // await sendPasswordResetEmail(email, encodeURIComponent(resetToken));
   }

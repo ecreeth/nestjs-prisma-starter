@@ -11,10 +11,6 @@ export class UserService {
     private hashingService: HashingService,
   ) {}
 
-  create(data: Prisma.UserCreateInput) {
-    return this.prisma.user.create({ data });
-  }
-
   findAll(): Promise<User[]> {
     return this.prisma.user.findMany({ take: 1000 });
   }
@@ -24,7 +20,7 @@ export class UserService {
   }
 
   findById(id: string): Promise<User> {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findUniqueOrThrow({ where: { id } });
   }
 
   findOneByOrFail(options: Prisma.UserFindFirstArgs): Promise<User> {
@@ -32,7 +28,7 @@ export class UserService {
   }
 
   findByEmail(email: string): Promise<User> {
-    return this.prisma.user.findUnique({ where: { email } });
+    return this.prisma.user.findUniqueOrThrow({ where: { email } });
   }
 
   update(id: string, data: Prisma.UserUpdateInput) {
@@ -53,13 +49,12 @@ export class UserService {
   }
 
   async verifyPassword(userId: string, password: string) {
-    const user = await this.prisma.user.findFirstOrThrow({
-      where: { id: userId },
-      select: { password: true },
+    const userPassword = await this.prisma.password.findFirstOrThrow({
+      where: { userId },
     });
 
     const isPasswordValid = await this.hashingService.compare(
-      user.password,
+      userPassword.hash,
       password,
     );
 
@@ -75,13 +70,12 @@ export class UserService {
   }
 
   async changePassword(userId: string, payload: ChangePasswordDto) {
-    const user = await this.prisma.user.findFirstOrThrow({
-      where: { id: userId },
-      select: { password: true },
+    const userPassword = await this.prisma.password.findFirstOrThrow({
+      where: { userId },
     });
 
     const isPasswordValid = await this.hashingService.compare(
-      user.password,
+      userPassword.hash,
       payload.currentPassword,
     );
 
@@ -93,9 +87,9 @@ export class UserService {
 
     const hashedPassword = await this.hashingService.hash(payload.newPassword);
 
-    return await this.prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
+    return await this.prisma.password.update({
+      where: { userId },
+      data: { hash: hashedPassword },
     });
   }
 }

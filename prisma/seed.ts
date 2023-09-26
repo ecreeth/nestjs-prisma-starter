@@ -58,7 +58,11 @@ async function main() {
       email: 'lisa@simpson.com',
       firstName: 'Lisa',
       lastName: 'Simpson',
-      password: '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', // secret42
+      password: {
+        create: {
+          hash: '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', // secret42
+        },
+      },
     },
   });
 
@@ -67,7 +71,11 @@ async function main() {
       email: 'bart@simpson.com',
       firstName: 'Bart',
       lastName: 'Simpson',
-      password: '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', // secret42
+      password: {
+        create: {
+          hash: '$2b$10$EpRnTzVlqHNP0.fUbXUwSOyuiXe/QLSUG6xNekdHgTGmrpHEfIoxm', // secret42
+        },
+      },
     },
   });
 

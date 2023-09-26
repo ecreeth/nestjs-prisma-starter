@@ -15,7 +15,6 @@ model User {
   username  String? @unique
   firstName String? @map("first_name")
   lastName  String? @map("last_name")
-  password  String?
 
   disabled         Boolean @default(false)
   totpEnabled      Boolean @default(false) @map("totp_enabled")
@@ -38,8 +37,16 @@ model User {
   roles         Role[]
   apiKeys       ApiKey[]
   refreshTokens RefreshToken[]
+  password      Password?
 
   @@map("users")
+}
+
+model Password {
+  hash String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique
 }
 
 model PasswordReset {

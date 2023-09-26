@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsNumberString,
   IsOptional,
-  Length,
 } from 'class-validator';
 import { lowerCase } from 'src/utils/index.utils';
 
@@ -16,7 +15,6 @@ export class SignInDto {
   @Transform(lowerCase)
   email: string;
 
-  @Length(8, 50)
   @ApiProperty()
   @IsNotEmpty()
   password: string;
