@@ -1,7 +1,7 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
-import { HashingService } from '../iam/hashing/hashing.service';
+import { HashingService } from '../hashing/hashing.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
@@ -40,7 +40,10 @@ export class UserService {
   }
 
   remove(id: string) {
-    return this.prisma.user.delete({ where: { id } });
+    return this.prisma.user.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 
   async count() {
@@ -79,7 +82,7 @@ export class UserService {
 
     const isPasswordValid = await this.hashingService.compare(
       user.password,
-      payload.oldPassword,
+      payload.currentPassword,
     );
 
     if (!isPasswordValid) {

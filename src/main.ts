@@ -1,11 +1,11 @@
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
+import { PrismaClientExceptionFilter } from 'nestjs-prisma';
 import type {
-  CorsConfig,
   NestConfig,
   SwaggerConfig,
 } from 'src/common/configs/config.interface';
@@ -20,7 +20,7 @@ async function bootstrap() {
    * Set a prefix for every route registered
    * URL: https://docs.nestjs.com/faq/global-prefix
    */
-  app.setGlobalPrefix('v1/api', {
+  app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
 
@@ -58,12 +58,11 @@ async function bootstrap() {
    * Prisma client exception filter for unhandled exceptions
    * URL: https://nestjs-prisma.dev/docs/exception-filter
    */
-  // const { httpAdapter } = app.get(HttpAdapterHost);
-  // app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
 
   const configService = app.get(ConfigService);
   const nestConfig = configService.get<NestConfig>('nest');
-  const corsConfig = configService.get<CorsConfig>('cors');
   const swaggerConfig = configService.get<SwaggerConfig>('swagger');
 
   /*

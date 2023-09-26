@@ -10,7 +10,7 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { randomUUID } from 'node:crypto';
 import jwtConfig from 'src/common/configs/jwt.config';
-import { HashingService } from '../hashing/hashing.service';
+import { HashingService } from '../../hashing/hashing.service';
 import { JWTPayload } from '../interfaces/req-user-data.interface';
 import { Token } from '../interfaces/token.interface';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';

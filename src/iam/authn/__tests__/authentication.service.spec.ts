@@ -2,7 +2,7 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '@prisma/client';
-import { HashingService } from '../../hashing/hashing.service';
+import { HashingService } from '../../../hashing/hashing.service';
 import { AuthnService } from '../authentication.service';
 import { OtpService } from '../otp/otp.service';
 

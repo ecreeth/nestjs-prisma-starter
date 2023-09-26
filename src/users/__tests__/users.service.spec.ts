@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { User } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
-import { HashingService } from '../../iam/hashing/hashing.service';
+import { HashingService } from '../../hashing/hashing.service';
 import { UserService } from '../users.service';
 
 const createUserDto = {
@@ -84,9 +84,9 @@ describe('UsersService', () => {
   describe('changePassword', () => {
     it('should change the password for a user', async () => {
       const userId = '1';
-      const userPassword = 'oldPassword';
+      const userPassword = 'currentPassword';
       const changePassword = {
-        oldPassword: 'oldPassword',
+        currentPassword: 'currentPassword',
         newPassword: 'newPassword',
       };
       const hashedPassword = 'hashedPassword';
@@ -112,7 +112,7 @@ describe('UsersService', () => {
 
       expect(findUniqueSpy).toHaveBeenCalledWith({ where: { id: userId } });
       expect(compareSpy).toHaveBeenCalledWith(
-        changePassword.oldPassword,
+        changePassword.currentPassword,
         userPassword,
       );
       expect(hashSpy).toHaveBeenCalledWith(changePassword.newPassword);
@@ -125,9 +125,9 @@ describe('UsersService', () => {
 
     it('should throw BadRequestException if the old password is not valid', async () => {
       const userId = '1';
-      const userPassword = 'oldPassword';
+      const userPassword = 'currentPassword';
       const changePassword = {
-        oldPassword: 'wrongPassword',
+        currentPassword: 'wrongPassword',
         newPassword: 'newPassword',
       };
 
@@ -140,16 +140,16 @@ describe('UsersService', () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(compareSpy).toHaveBeenCalledWith(
-        changePassword.oldPassword,
+        changePassword.currentPassword,
         userPassword,
       );
     });
 
     it('should throw an error if an error occurs during the password change process', async () => {
       const userId = '1';
-      const userPassword = 'oldPassword';
+      const userPassword = 'currentPassword';
       const changePassword = {
-        oldPassword: 'oldPassword',
+        currentPassword: 'currentPassword',
         newPassword: 'newPassword',
       };
 
@@ -162,7 +162,7 @@ describe('UsersService', () => {
       ).rejects.toThrow(Error);
 
       expect(compareSpy).toHaveBeenCalledWith(
-        changePassword.oldPassword,
+        changePassword.currentPassword,
         userPassword,
       );
     });

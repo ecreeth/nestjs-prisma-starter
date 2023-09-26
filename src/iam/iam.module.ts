@@ -17,7 +17,7 @@ import { GoogleAuthnController } from './authn/social/google/google-authenticati
 import { GoogleAuthnService } from './authn/social/google/google-authentication.service';
 import { AuthzController } from './authz/authorization.controller';
 import { RoleService } from './authz/roles/roles.service';
-import { HashingService } from './hashing/hashing.service';
+import { HashingService } from '../hashing/hashing.service';
 
 @Module({
   imports: [

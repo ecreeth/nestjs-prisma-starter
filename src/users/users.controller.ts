@@ -63,6 +63,9 @@ export class UsersController {
     return this.prisma.user.findMany({
       where: {
         // TODO: Add any conditions here
+        deletedAt: {
+          equals: null,
+        },
       },
       take: limit,
       skip: offset,
