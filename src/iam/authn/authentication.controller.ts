@@ -31,6 +31,7 @@ export class AuthnController {
 
   @Post('sign-up')
   @Auth(AuthType.None)
+  @HttpCode(HttpStatus.CREATED)
   @ApiBody({ type: SignUpDto })
   signUp(@Body() payload: SignUpDto) {
     return this.authnService.signUp(payload);

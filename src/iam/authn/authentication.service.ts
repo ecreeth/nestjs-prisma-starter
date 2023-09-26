@@ -88,6 +88,11 @@ export class AuthnService {
       }
     }
 
+    await this.prisma.user.update({
+      where: { email: payload.email },
+      data: { lastSignInAt: new Date() },
+    });
+
     return await this.generateTokens(user);
   }
 
@@ -174,10 +179,8 @@ export class AuthnService {
         issuer: this.jwtConfiguration.issuer,
         audience: this.jwtConfiguration.audience,
       });
-      const user = await this.prisma.user.findFirst({
-        where: {
-          id: sub,
-        },
+      const user = await this.prisma.user.findUnique({
+        where: { id: sub },
       });
 
       if (!user) {
@@ -245,7 +248,6 @@ export class AuthnService {
     });
 
     return { email: passwordReset.email, token: passwordReset.token };
-
     // await sendPasswordResetEmail(email, encodeURIComponent(resetToken));
   }
 }

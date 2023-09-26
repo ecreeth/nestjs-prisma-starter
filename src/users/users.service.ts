@@ -11,14 +11,6 @@ export class UserService {
     private hashingService: HashingService,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.prisma.user.findMany({ take: 1000 });
-  }
-
-  findOne(options: Prisma.UserFindUniqueArgs): Promise<User> {
-    return this.prisma.user.findUnique(options);
-  }
-
   findById(id: string): Promise<User> {
     return this.prisma.user.findUniqueOrThrow({ where: { id } });
   }
@@ -44,7 +36,13 @@ export class UserService {
 
   async count() {
     return {
-      count: await this.prisma.user.count(),
+      count: await this.prisma.user.count({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+        },
+      }),
     };
   }
 
@@ -54,8 +52,8 @@ export class UserService {
     });
 
     const isPasswordValid = await this.hashingService.compare(
-      userPassword.hash,
       password,
+      userPassword.hash,
     );
 
     if (!isPasswordValid) {
@@ -75,8 +73,8 @@ export class UserService {
     });
 
     const isPasswordValid = await this.hashingService.compare(
-      userPassword.hash,
       payload.currentPassword,
+      userPassword.hash,
     );
 
     if (!isPasswordValid) {
@@ -87,9 +85,13 @@ export class UserService {
 
     const hashedPassword = await this.hashingService.hash(payload.newPassword);
 
-    return await this.prisma.password.update({
+    await this.prisma.password.update({
       where: { userId },
       data: { hash: hashedPassword },
     });
+
+    return {
+      changed: true,
+    };
   }
 }

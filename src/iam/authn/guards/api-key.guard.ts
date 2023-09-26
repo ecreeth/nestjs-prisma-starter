@@ -26,17 +26,33 @@ export class ApiKeyGuard implements CanActivate {
 
     try {
       const uuid = this.apiKeyService.extractIdFromApiKey(apiKey);
-      const apiKeyModel = await this.prisma.apiKey.findFirst({
+      const { key, user } = await this.prisma.apiKey.findFirst({
         where: { uuid },
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
       });
-      await this.apiKeyService.validate(apiKey, apiKeyModel.key);
+      const isValid = await this.apiKeyService.validate(apiKey, key);
+
+      if (!isValid) {
+        return false;
+      }
+
       request[REQUEST_USER_KEY] = {
-        sub: apiKeyModel.user.id,
-        email: apiKeyModel.user.email,
+        sub: user.id,
+        email: user.email,
+        username: user.username,
+        name: `${user.firstName} ${user.lastName}`,
       } as JWTPayload;
+
       return true;
     } catch {
       throw new UnauthorizedException();

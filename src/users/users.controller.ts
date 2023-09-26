@@ -3,8 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
+  Post,
   Query,
 } from '@nestjs/common';
 import { ApiParam, ApiTags } from '@nestjs/swagger';
@@ -23,7 +26,20 @@ export class UsersController {
     private usersService: UserService,
   ) {}
 
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  me(@ReqUser() user) {
+    return user;
+  }
+
+  @Get('count')
+  @HttpCode(HttpStatus.OK)
+  count() {
+    return this.usersService.count();
+  }
+
   @Get()
+  @HttpCode(HttpStatus.OK)
   findAll(
     @Query('query') query?: string,
     @Query('limit') limit?: number,
@@ -35,7 +51,6 @@ export class UsersController {
     limit = Math.max(1, Math.min(500, limit)) || 10;
 
     const allowedOrderBys = [
-      'id',
       'email',
       'username',
       'firstName',
@@ -67,34 +82,28 @@ export class UsersController {
   }
 
   @Get(':user_id')
+  @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'user_id' })
   findOne(@Param('user_id') userId: string) {
     return this.usersService.findById(userId);
   }
 
   @Patch(':user_id')
+  @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'user_id' })
   update(@Param('user_id') userId: string, @Body() payload: UpdateUserDto) {
     return this.usersService.update(userId, payload);
   }
 
   @Delete(':user_id')
+  @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'user_id' })
   remove(@Param('user_id') userId: string) {
     return this.usersService.remove(userId);
   }
 
-  @Get('count')
-  count() {
-    return this.usersService.count();
-  }
-
-  @Get('me')
-  me(@ReqUser() user) {
-    return user;
-  }
-
-  @Get(':user_id/verify-password')
+  @Post(':user_id/verify-password')
+  @HttpCode(HttpStatus.OK)
   verifyPassword(
     @Param('user_id') userId: string,
     @Body() payload: VerifyPassword,
@@ -102,7 +111,8 @@ export class UsersController {
     return this.usersService.verifyPassword(userId, payload.password);
   }
 
-  @Get(':user_id/change-password')
+  @Post(':user_id/change-password')
+  @HttpCode(HttpStatus.OK)
   changePassword(
     @Param('user_id') userId: string,
     @Body() payload: ChangePasswordDto,
