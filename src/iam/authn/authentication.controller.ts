@@ -62,6 +62,7 @@ export class AuthnController {
   }
 
   @Post('refresh-tokens')
+  @Auth(AuthType.None)
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: RefreshTokenDto })
   refreshTokens(@Body() payload: RefreshTokenDto) {

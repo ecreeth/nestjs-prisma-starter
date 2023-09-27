@@ -1,14 +1,10 @@
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 import { PrismaClientExceptionFilter } from 'nestjs-prisma';
-import type {
-  NestConfig,
-  SwaggerConfig,
-} from 'src/common/configs/config.interface';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -23,6 +19,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
+
+  /*
+   * Helmet can help protect your app from some well-known
+   * web vulnerabilities by setting HTTP headers appropriately.
+   * URL: https://docs.nestjs.com/security/helmet
+   */
+  app.use(helmet());
 
   /*
    * It parses incoming requests with JSON payloads
@@ -61,25 +64,19 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
 
-  const configService = app.get(ConfigService);
-  const nestConfig = configService.get<NestConfig>('nest');
-  const swaggerConfig = configService.get<SwaggerConfig>('swagger');
-
   /*
    * Swagger API
    * URL: https://docs.nestjs.com/openapi/introduction
    */
-  if (swaggerConfig.enabled) {
-    const options = new DocumentBuilder()
-      .setTitle(swaggerConfig.title || 'Nestjs')
-      .setDescription(swaggerConfig.description || 'The nestjs API description')
-      .setVersion(swaggerConfig.version || '1.0')
-      .build();
-    const document = SwaggerModule.createDocument(app, options);
+  const options = new DocumentBuilder()
+    .setTitle('Fresh')
+    .setVersion('1.0')
+    .setDescription('The Fresh Server API description')
+    .build();
+  const document = SwaggerModule.createDocument(app, options);
 
-    SwaggerModule.setup(swaggerConfig.path || 'api', app, document);
-  }
+  SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT || nestConfig.port || 3000);
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

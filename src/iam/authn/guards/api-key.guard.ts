@@ -33,9 +33,6 @@ export class ApiKeyGuard implements CanActivate {
             select: {
               id: true,
               email: true,
-              username: true,
-              firstName: true,
-              lastName: true,
             },
           },
         },
@@ -49,8 +46,6 @@ export class ApiKeyGuard implements CanActivate {
       request[REQUEST_USER_KEY] = {
         sub: user.id,
         email: user.email,
-        username: user.username,
-        name: `${user.firstName} ${user.lastName}`,
       } as JWTPayload;
 
       return true;
