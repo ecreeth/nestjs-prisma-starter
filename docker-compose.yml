@@ -1,28 +1,37 @@
 version: '3.8'
+
+volumes:
+  postgres_main:
+    name: fresh-db
+
+networks:
+  openfga:
+
+
 services:
-  nest-api:
-    container_name: nest-api
+  fresh-api:
+    container_name: fresh-api
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
     depends_on:
-      - postgres
+      - postgres_main
       - redis
     env_file:
       - .env
 
-  postgres:
+  postgres_main:
     image: postgres:15
-    container_name: postgres
+    container_name: postgres_main
     restart: always
     ports:
-      - '5432:5432'
+      - '5434:5432'
     env_file:
       - .env
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres_main:/var/lib/postgresql/data
 
   redis:
     image: redis:alpine
@@ -30,6 +39,52 @@ services:
     ports:
       - '6379:6379'
 
-volumes:
   postgres:
-    name: nest-db
+    image: postgres:15
+    container_name: postgres
+    networks:
+      - openfga
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    image: openfga/openfga:latest
+    container_name: migrate
+    command: migrate
+    environment:
+      - OPENFGA_DATASTORE_ENGINE=postgres
+      - OPENFGA_DATASTORE_URI=postgres://postgres:password@postgres:5432/postgres?sslmode=disable
+    networks:
+      - openfga
+
+  openfga:
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    image: openfga/openfga:latest
+    container_name: openfga
+    environment:
+      - OPENFGA_DATASTORE_ENGINE=postgres
+      - OPENFGA_DATASTORE_URI=postgres://postgres:password@postgres:5432/postgres?sslmode=disable
+      - OPENFGA_LOG_FORMAT=json
+    command: run
+    networks:
+      - openfga
+    ports:
+      # Needed for the http server
+      - "8080:8080"
+      # Needed for the grpc server (if used)
+      - "8081:8081"
+      # Needed for the playground (Do not enable in prod!)
+      - "3001:3000"

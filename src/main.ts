@@ -7,6 +7,8 @@ import helmet from 'helmet';
 import { PrismaClientExceptionFilter } from 'nestjs-prisma';
 import { AppModule } from './app.module';
 
+const MAX_REQUEST_BODY_SIZE = '50mb';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     // abortOnError: false,
@@ -31,13 +33,13 @@ async function bootstrap() {
    * It parses incoming requests with JSON payloads
    * URL: https://expressjs.com/en/api.html#express.json
    */
-  app.use(json({ limit: '50mb' }));
+  app.use(json({ limit: MAX_REQUEST_BODY_SIZE }));
 
   /*
    * It parses incoming requests with urlencoded payloads
    * URL: https://expressjs.com/en/api.html#express.urlencoded
    */
-  app.use(urlencoded({ extended: true, limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: MAX_REQUEST_BODY_SIZE }));
 
   /*
    * Use the built-in validation
