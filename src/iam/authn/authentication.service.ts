@@ -19,7 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { OtpService } from './otp/otp.service';
-import { RefreshTokenIdsStorage } from './refresh-token-ids-storage.service';
+import { RefreshTokenStorage } from './refresh-token-storage.service';
 
 @Injectable()
 export class AuthnService {
@@ -27,7 +27,7 @@ export class AuthnService {
     private jwtService: JwtService,
     private otpService: OtpService,
     private hashingService: HashingService,
-    private refreshTokenIdsStorage: RefreshTokenIdsStorage,
+    private refreshTokenStorage: RefreshTokenStorage,
     private prisma: PrismaService,
     @Inject(jwtConfig.KEY)
     private jwtConfiguration: ConfigType<typeof jwtConfig>,
@@ -137,7 +137,7 @@ export class AuthnService {
       }),
     ]);
 
-    await this.refreshTokenIdsStorage.insert(user.id, refreshTokenId);
+    await this.refreshTokenStorage.insert(user.id, refreshTokenId);
 
     return {
       accessToken,
@@ -190,7 +190,7 @@ export class AuthnService {
         where: { id: sub },
       });
 
-      const isRefreshTokenIdValid = await this.refreshTokenIdsStorage.validate(
+      const isRefreshTokenIdValid = await this.refreshTokenStorage.validate(
         user.id,
         refreshTokenId,
       );
@@ -199,7 +199,7 @@ export class AuthnService {
         throw new Error('Refresh token is invalid');
       }
 
-      await this.refreshTokenIdsStorage.invalidate(user.id);
+      await this.refreshTokenStorage.invalidate(user.id);
 
       return this.generateTokens(user);
     } catch {

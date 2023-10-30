@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RefreshTokenIdsStorage } from '../refresh-token-ids-storage.service';
+import { RefreshTokenStorage } from '../refresh-token-storage.service';
 
-describe('RefreshTokenIdsStorageService', () => {
-  let service: RefreshTokenIdsStorage;
+describe('RefreshTokenStorageService', () => {
+  let service: RefreshTokenStorage;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RefreshTokenIdsStorage],
+      providers: [RefreshTokenStorage],
     }).compile();
 
-    service = module.get<RefreshTokenIdsStorage>(RefreshTokenIdsStorage);
+    service = module.get<RefreshTokenStorage>(RefreshTokenStorage);
   });
 
   it('should be defined', () => {
