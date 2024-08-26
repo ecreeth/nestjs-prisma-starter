@@ -48,6 +48,12 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   /*
+   * Enables the usage of shutdown hooks.
+   * URL: https://docs.nestjs.com/fundamentals/lifecycle-events#application-shutdown
+   */
+  app.enableShutdownHooks();
+
+  /*
    * Cross-origin resource sharing (CORS)
    * URL: https://docs.nestjs.com/security/cors#getting-started
    */
